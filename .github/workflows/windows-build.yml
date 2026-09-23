@@ -1,0 +1,178 @@
+name: Windows build
+
+# Thin caller: it prepares the toolchains, moves cache entries and uploads what
+# the repository's own scripts produced. All build logic lives in scripts/ci/*.ps1
+# so the same build runs on a developer machine and in any CI vendor.
+#
+# Incremental builds: the rust and flutter domains are cached under a key
+# computed by scripts/ci/domain-fingerprints.ps1 from committed content plus the
+# toolchain. build-windows.ps1 skips a domain whose fingerprint still matches and
+# whose outputs are present, and records what it reused in build-info.txt. See
+# docs/windows-incremental-build.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Build profile
+        type: choice
+        options: [release, debug]
+        default: release
+      rust_targets:
+        description: Comma separated rustup targets (the first one is packaged)
+        type: string
+        default: x86_64-pc-windows-msvc
+      skip_tests:
+        description: Skip the Dart and Rust test suites
+        type: boolean
+        default: false
+      force_rebuild:
+        description: Ignore every domain cache and rebuild from scratch
+        type: boolean
+        default: false
+      retention_days:
+        description: Artifact retention in days
+        type: string
+        default: "14"
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.44.2"
+  # The runner's console code page is not UTF-8, so a Python helper that prints
+  # non-ASCII would die with UnicodeEncodeError before doing its work.
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: windows-2022
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Bootstrap
+        shell: pwsh
+        run: |
+          pwsh scripts/ci/bootstrap-windows.ps1 -RustTargets '${{ inputs.rust_targets || 'x86_64-pc-windows-msvc' }}' -ExpectedFlutterVersion '${{ env.FLUTTER_VERSION }}'
+
+      # Fingerprints are computed here, after every toolchain is on PATH, because
+      # the Flutter SDK, the Rust toolchain and the MSVC toolset are part of what
+      # a domain depends on. build-windows.ps1 computes the same values, so the
+      # keys and the markers always agree.
+      - name: Domain fingerprints
+        id: domains
+        shell: pwsh
+        run: |
+          pwsh scripts/ci/domain-fingerprints.ps1 -Profile '${{ inputs.profile || 'release' }}' -RustTarget '${{ inputs.rust_targets || 'x86_64-pc-windows-msvc' }}'
+
+      # One cache per domain. The key is the fingerprint, so a changed input
+      # misses and rebuilds; the marker inside .muse-domain-cache travels with
+      # the outputs and is what build-windows.ps1 checks before skipping a step.
+      - name: Restore rust cache
+        id: cache-rust
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            target
+            .muse-domain-cache/rust.json
+          key: win-rust-${{ steps.domains.outputs.rust }}
+
+      - name: Restore flutter cache
+        id: cache-flutter
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            app/openmuse_host/build/windows
+            .muse-domain-cache/flutter.json
+          key: win-flutter-${{ steps.domains.outputs.flutter }}
+
+      - name: Build
+        shell: pwsh
+        run: |
+          $arguments = @{
+            Profile        = '${{ inputs.profile || 'release' }}'
+            RustTargets    = '${{ inputs.rust_targets || 'x86_64-pc-windows-msvc' }}'
+            DomainCacheDir = '.muse-domain-cache'
+          }
+          if ('${{ inputs.skip_tests || 'false' }}' -eq 'true') { $arguments.SkipTests = $true }
+          # A release tag always builds from scratch, so a cached artefact can
+          # never be published by accident.
+          if ('${{ inputs.force_rebuild }}' -eq 'true' -or '${{ github.ref_type }}' -eq 'tag') { $arguments.ForceRebuild = $true }
+          pwsh scripts/ci/build-windows.ps1 @arguments
+
+      # Only a run that actually produced a domain saves it. A step that failed
+      # aborts the job, so a half-built domain never becomes a cache entry.
+      - name: Save rust cache
+        if: steps.cache-rust.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            target
+            .muse-domain-cache/rust.json
+          key: win-rust-${{ steps.domains.outputs.rust }}
+
+      - name: Save flutter cache
+        if: steps.cache-flutter.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            app/openmuse_host/build/windows
+            .muse-domain-cache/flutter.json
+          key: win-flutter-${{ steps.domains.outputs.flutter }}
+
+      - name: Upload archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenMuse-windows-${{ github.sha }}
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build-info.txt
+          if-no-files-found: error
+          retention-days: ${{ fromJSON(inputs.retention_days || '14') }}
+
+      - name: Summary
+        if: always()
+        shell: pwsh
+        run: |
+          $lines = @('## Windows build', '')
+          if (Test-Path dist/build-info.txt) {
+            $info = Get-Content dist/build-info.txt
+            $domainLine = $info | Where-Object { $_ -like 'domains:*' }
+            $commitLine = $info | Where-Object { $_ -like 'commit:*' }
+            if ($commitLine) { $lines += '`' + $commitLine.Trim() + '`'; $lines += '' }
+            if ($domainLine) { $lines += '`' + $domainLine.Trim() + '`'; $lines += '' }
+          }
+          if (Test-Path dist) {
+            $lines += '| artifact | size |'
+            $lines += '| --- | --- |'
+            foreach ($item in Get-ChildItem dist | Sort-Object Name) {
+              $lines += "| $($item.Name) | $([math]::Round($item.Length / 1MB, 1)) MB |"
+            }
+          } else {
+            $lines += 'No artifacts were produced.'
+          }
+          $lines | Add-Content -Path $env:GITHUB_STEP_SUMMARY

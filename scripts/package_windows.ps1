@@ -1,30 +1,48 @@
-$ErrorActionPreference = "Stop"
+#!/usr/bin/env pwsh
+<#
+.SYNOPSIS
+Package the OpenMuse Windows build.
 
-$RepoRoot = Split-Path -Parent $PSScriptRoot
-$AppRoot = Join-Path $RepoRoot "app/openmuse_host"
-$DistRoot = Join-Path $RepoRoot "dist"
-$BundleRoot = Join-Path $AppRoot "build/windows/x64/runner/Release"
-$Archive = Join-Path $DistRoot "OpenMuse-windows-x64.zip"
+.DESCRIPTION
+Kept as the documented Windows entry point (the README and older tooling call
+it). All build logic lives in scripts/ci/build-windows.ps1, which is also what
+.github/workflows/windows-build.yml runs, so a local package and a CI package are
+produced by exactly the same steps.
 
-Push-Location $AppRoot
-try {
-  flutter pub get
-  flutter analyze
-  flutter test
-  flutter build windows --release
-} finally {
-  Pop-Location
+.PARAMETER Profile
+release (default) or debug.
+
+.PARAMETER DomainCacheDir
+Reuse a previously built rust/flutter domain when its fingerprint still matches.
+
+.PARAMETER ForceRebuild
+Ignore every domain cache.
+
+.PARAMETER SkipTests
+Skip the Dart and Rust test suites (cargo build instead of cargo test).
+
+.EXAMPLE
+pwsh scripts/package_windows.ps1
+#>
+[CmdletBinding()]
+param(
+    [ValidateSet('release', 'debug')][string] $Profile = 'release',
+    [string] $DomainCacheDir = '',
+    [switch] $ForceRebuild,
+    [switch] $SkipTests,
+    [switch] $DryRun
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$arguments = @{
+    Profile    = $Profile
+    SkipTests  = $SkipTests
+    DryRun     = $DryRun
 }
+if ($DomainCacheDir) { $arguments.DomainCacheDir = $DomainCacheDir }
+if ($ForceRebuild) { $arguments.ForceRebuild = $true }
 
-$Executable = Join-Path $BundleRoot "OpenMuse.exe"
-if (-not (Test-Path $Executable)) {
-  throw "Missing Windows executable: $Executable"
-}
-
-New-Item -ItemType Directory -Force -Path $DistRoot | Out-Null
-if (Test-Path $Archive) {
-  Remove-Item $Archive
-}
-Compress-Archive -Path (Join-Path $BundleRoot "*") -DestinationPath $Archive
-Write-Output $Archive
-
+& (Join-Path $PSScriptRoot 'ci/build-windows.ps1') @arguments
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

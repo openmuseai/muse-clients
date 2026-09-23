@@ -1,0 +1,64 @@
+name: Diagnose Windows toolchain
+
+# Answers "why can't the Windows build see Visual Studio?" without running the
+# full pipeline: the same thin-caller shape as windows-build.yml, but it only
+# runs the repository's own scripts. Takes minutes instead of tens of minutes.
+#
+# With run_bootstrap (the default) it first runs bootstrap-windows.ps1, so the
+# environment fixes it applies are in place before the probe builds a scratch
+# Flutter Windows project. That combination reproduces the failure and proves the
+# fix without waiting for a full build.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_bootstrap:
+        description: Run bootstrap-windows.ps1 first
+        type: boolean
+        default: true
+      check_build:
+        description: Also run flutter create + flutter build windows on a scratch project
+        type: boolean
+        default: true
+      flutter_version:
+        description: Flutter version to install
+        type: string
+        default: 3.44.2
+
+jobs:
+  diagnose:
+    name: Windows toolchain
+    runs-on: windows-2022
+    timeout-minutes: 30
+    env:
+      FLUTTER_VERSION: ${{ inputs.flutter_version }}
+      PYTHONUTF8: 1
+      PYTHONIOENCODING: utf-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Bootstrap
+        if: inputs.run_bootstrap
+        shell: pwsh
+        run: |
+          pwsh scripts/ci/bootstrap-windows.ps1 -RustTargets x86_64-pc-windows-msvc
+
+      - name: Diagnose
+        shell: pwsh
+        env:
+          CHECK_BUILD: ${{ inputs.check_build }}
+        run: |
+          $arguments = @{ FlutterHome = $env:FLUTTER_ROOT }
+          if ($env:CHECK_BUILD -eq 'true') { $arguments.CheckBuild = $true }
+          pwsh scripts/ci/diagnose-windows-vs.ps1 @arguments

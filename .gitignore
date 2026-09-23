@@ -15,6 +15,10 @@
 **/build/
 **/coverage/
 
+# Per-domain fingerprints and reuse markers written by scripts/ci/build-windows.ps1.
+# They describe a local build, and in CI they travel inside the domain cache entry.
+/.muse-domain-cache/
+
 # --- Dart / Flutter ----------------------------------------------------------
 **/.dart_tool/
 **/.packages
