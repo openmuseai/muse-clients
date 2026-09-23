@@ -1,0 +1,19 @@
+name: openmuse_builtin_plugins
+description: Product composition root for the OpenMuse first-party plugin set.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  openmuse_dsh_plugin:
+    path: ../../plugins/dsh-agent
+  openmuse_file_viewer:
+    path: ../../plugins/open-file-viewer
+  openmuse_helix_plugin:
+    path: ../../plugins/helix
+  openmuse_native_text_gate:
+    path: ../../plugins/native-text-gate
+  openmuse_plugin_sdk:
+    path: ../../packages/openmuse_plugin_sdk
