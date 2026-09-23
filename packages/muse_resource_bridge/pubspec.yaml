@@ -1,0 +1,17 @@
+name: muse_resource_bridge
+description: Cross-end Host Bridge envelopes and materialization admission policies for Muse resources.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  muse_resource_contract:
+    path: ../muse_resource_contract
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
