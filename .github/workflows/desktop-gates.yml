@@ -1,0 +1,41 @@
+name: desktop-gates
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.2
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --workspace --locked
+      - run: ./scripts/package_macos.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenMuse-macos-unsigned
+          path: dist/OpenMuse-macos.zip
+
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.2
+          cache: true
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --workspace --locked
+      - shell: pwsh
+        run: ./scripts/package_windows.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OpenMuse-windows-unsigned
+          path: dist/OpenMuse-windows-x64.zip

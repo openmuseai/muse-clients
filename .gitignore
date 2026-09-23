@@ -1,0 +1,100 @@
+# =============================================================================
+# OpenMuse local desktop — repository ignore rules
+#
+# Tracked on purpose: product source, workspace manifests and lockfiles, JSON
+# contracts and schemas, plugin manifests and their small assets, README.
+#
+# Ignored on purpose: build outputs, package-manager caches, native toolchain
+# scaffolding, vendored engine binaries, and development-process material
+# (plans, reviews, gate results, packaging helpers) that is not part of the
+# shipped product.
+# =============================================================================
+
+# --- Build outputs -----------------------------------------------------------
+/target/
+/dist/
+**/build/
+**/coverage/
+
+# --- Dart / Flutter ----------------------------------------------------------
+**/.dart_tool/
+**/.packages
+**/.pub-cache/
+**/.pub/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/Flutter/ephemeral/
+**/Flutter/.last_build_id
+**/.symlinks/
+app.*.symbols
+app.*.map.json
+
+# --- Native / macOS / CocoaPods ---------------------------------------------
+**/Pods/
+**/xcuserdata/
+**/*.xcuserstate
+**/*.dgph
+**/DerivedData/
+*.ipa
+*.dSYM/
+*.hmap
+*.xcarchive/
+
+# --- Windows / Visual Studio -------------------------------------------------
+**/x64/
+**/x86/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# --- Node / sidecar runtime --------------------------------------------------
+**/node_modules/
+
+# --- Vendored engine binaries ------------------------------------------------
+# The Helix engine is staged locally by the packaging helpers; only the plugin
+# wrapper source and its manifest belong in the repository.
+/plugins/helix/assets/engines/helix/hx
+/plugins/helix/assets/engines/helix/runtime/
+/plugins/helix/assets/engines/helix/LICENSE.MPL-2.0
+
+# --- Release bundles ---------------------------------------------------------
+*.zip
+*.dmg
+*.pkg
+*.tar.gz
+
+# --- Development-process material -------------------------------------------
+# Working plans, parity matrices, review notes, gate results and packaging
+# helpers stay local; they document how the product was arrived at, not what
+# the product is.
+/docs/
+/scripts/
+/tmp/
+/scratch/
+/notes/
+*.local.md
+*.draft.md
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# --- Tooling / editors -------------------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.history/
+.atom/
+.buildlog/
+migrate_working_dir/
+*.swp
+*.class
+*.pyc
+
+# --- OS noise ----------------------------------------------------------------
+.DS_Store
+._*
+*.log
