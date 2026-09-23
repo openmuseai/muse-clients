@@ -58,66 +58,39 @@ function Get-StoredGitHubToken {
     <#
     Read the PAT that Git Credential Manager already keeps for github.com.
 
-    git stores it as a generic credential named 'git:https://github.com' (the
-    entry `cmdkey /list` shows), so the Actions API can reuse it instead of asking
-    for a token on every call.
+    Ask git rather than the Windows credential store directly: GCM stores its own
+    serialised blob (the entry `cmdkey /list` shows as 'git:https://github.com'),
+    and `git credential fill` is the supported way to read it back. Reading
+    CredentialBlob by hand guesses at the encoding and can silently return a
+    mangled token.
+
+    The request goes through a temp file because Git for Windows reads the
+    credential protocol more reliably from a redirected file than from a
+    PowerShell pipeline.
     #>
-    param([string] $TargetName = 'git:https://github.com')
+    param([string] $HostName = 'github.com')
+    $temp = Join-Path ([System.IO.Path]::GetTempPath()) ("openmuse-cred-" + [guid]::NewGuid().ToString('n'))
     try {
-        if (-not ('OpenMuseCredentialStore' -as [type])) {
-            Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-
-public class OpenMuseCredentialStore {
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    public struct CREDENTIAL {
-        public uint Flags;
-        public uint Type;
-        public string TargetName;
-        public string Comment;
-        public System.Runtime.InteropServices.ComTypes.FILETIME LastWritten;
-        public uint CredentialBlobSize;
-        public IntPtr CredentialBlob;
-        public uint Persist;
-        public uint AttributeCount;
-        public IntPtr Attributes;
-        public string TargetAlias;
-        public string UserName;
-    }
-
-    [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    public static extern bool CredRead(string target, uint type, uint reservedFlag, out IntPtr credentialPtr);
-
-    [DllImport("advapi32.dll", SetLastError = true)]
-    public static extern void CredFree(IntPtr buffer);
-}
-'@ -ErrorAction Stop
-        }
-        $pointer = [IntPtr]::Zero
-        # type 1 = CRED_TYPE_GENERIC
-        if (-not [OpenMuseCredentialStore]::CredRead($TargetName, 1, 0, [ref]$pointer)) {
-            $script:CredentialStoreError = "CredRead('$TargetName') failed with win32 error $([System.Runtime.InteropServices.Marshal]::GetLastWin32Error())"
+        [System.IO.File]::WriteAllText($temp, "protocol=https`nhost=$HostName`n", (New-Object System.Text.ASCIIEncoding))
+        $output = @(& cmd /c "git credential fill < `"$temp`" 2>&1")
+        $passwordLine = $output | Where-Object { $_ -like 'password=*' } | Select-Object -First 1
+        if (-not $passwordLine) {
+            $script:CredentialStoreError = "git credential fill returned no password for $HostName"
             return $null
         }
-        try {
-            $credential = [System.Runtime.InteropServices.Marshal]::PtrToStructure($pointer, [type][OpenMuseCredentialStore+CREDENTIAL])
-            if ($credential.CredentialBlobSize -eq 0) {
-                $script:CredentialStoreError = "the stored credential '$TargetName' is empty"
-                return $null
-            }
-            $secret = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($credential.CredentialBlob, [int]($credential.CredentialBlobSize / 2))
-            if ([string]::IsNullOrWhiteSpace($secret)) {
-                $script:CredentialStoreError = "the stored credential '$TargetName' has no secret"
-                return $null
-            }
-            return @{ Token = $secret.Trim(); UserName = $credential.UserName }
-        } finally {
-            [OpenMuseCredentialStore]::CredFree($pointer)
+        $secret = ($passwordLine -replace '^password=', '').Trim()
+        if ([string]::IsNullOrWhiteSpace($secret)) {
+            $script:CredentialStoreError = "the stored credential for $HostName has no secret"
+            return $null
         }
+        $userLine = $output | Where-Object { $_ -like 'username=*' } | Select-Object -First 1
+        $userName = if ($userLine) { ($userLine -replace '^username=', '').Trim() } else { '' }
+        return @{ Token = $secret; UserName = $userName }
     } catch {
         $script:CredentialStoreError = $_.Exception.Message
         return $null
+    } finally {
+        Remove-Item -Force -ErrorAction SilentlyContinue $temp
     }
 }
 
