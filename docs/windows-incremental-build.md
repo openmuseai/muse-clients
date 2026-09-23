@@ -108,16 +108,42 @@ Flutter SDK、Rust 工具链和 MSVC 工具集本身都是域的输入。在它�
 
 ## 7. 实测
 
-在本机（Windows，Flutter 3.44.2，PowerShell 5.1）跑
-`pwsh scripts/ci/build-windows.ps1 -DomainCacheDir .muse-domain-cache`：
+### 7.1 本机（Windows，Flutter 3.44.2 / Dart 3.12.2，Windows PowerShell 5.1，VS 18.1 / MSVC 14.50）
 
-| 场景 | rust | dart | flutter | pack |
+```powershell
+# 冷：忽略缓存全量重建
+powershell scripts/ci/build-windows.ps1 -ForceRebuild -DomainCacheDir .muse-domain-cache
+# 热：同 commit、同工具链，按域复用
+powershell scripts/ci/build-windows.ps1             -DomainCacheDir .muse-domain-cache
+```
+
+| 运行 | 用时 | `build-info.txt` 的 domains 行 | 归档 SHA-256 |
+| --- | --- | --- | --- |
+| 冷 | 234 s | `rust=build,dart=build,flutter=build,pack=build` | `714d3787ea5a681d…` |
+| 热 | 202 s | `rust=cache,dart=build,flutter=cache,pack=build` | `714d3787ea5a681d…` |
+
+两次的归档**逐字节一致**（12.15 MB），也就是说"复用"没有让产物发生任何变化——这是这套机制能不能用的
+唯一判据。本机省下的时间不多（32 s），因为耗时的 `dart` 域按设计**不复用**，而 rust / flutter 在本机
+本来就快；真正体现价值的是 CI（见 7.2）。
+
+> **归档哈希的边界**：ZIP 条目里带着文件的修改时间，所以"内容相同"只有在**被打包的文件没有被重写**时
+> 才等于"哈希相同"。上面这一对之所以一致，是因为热运行复用了 flutter 域、没有重写
+> `runner/Release` 下的文件；如果两次都加 `-ForceRebuild`，内容一样但哈希会不同（mtime 变了）。
+> CI 上 run1/run2 哈希一致也是同一个原因：`actions/cache` 用 tar 搬运文件，mtime 被保留了下来。
+> 需要跨机器可复现的哈希时，要另外把 ZIP 条目的时间戳归一化。
+
+### 7.2 GitHub CI（`windows-2022`，commit `f39d949`，同一 commit 连续两次 dispatch）
+
+| 运行 | job 用时 | Build 步骤 | domains | 归档 SHA-256 |
 | --- | --- | --- | --- | --- |
-| 第一次（冷） | build | build | build | build |
-| 第二次（同 commit、同工具链） | cache | build | cache | build |
-| 改一个 Dart 文件后 | cache | build | build | build |
-| 改 `Cargo.toml` 后 | build | build | build | build |
-| `-ForceRebuild` | build | build | build | build |
+| [run 35857369632](https://github.com/openmuseai/muse-clients/actions/runs/35857369632)（冷） | 556 s | 365 s | `rust=build,dart=build,flutter=build,pack=build` | `bfb30641166f07dd…` |
+| [run 35858799593](https://github.com/openmuseai/muse-clients/actions/runs/35858799593)（热） | 417 s | 275 s | `rust=cache,dart=build,flutter=cache,pack=build` | `bfb30641166f07dd…` |
 
-`build-info.txt` 的 `domains:` 行是这些状态的权威记录；CI 上同一 commit 连续两次运行可以对照
-（第一次 build、第二次 cache）。
+第二次运行里 `Save rust cache` / `Save flutter cache` 两步是 **skipped**（`cache-hit == 'true'`），
+说明缓存确实命中；产物哈希与冷构建完全一致。省下的 90 s 全部来自 rust + flutter 两个域，
+而 `dart` 域照常跑完了 14 个包加 host 的 analyze/test——这是刻意的：**没跑过测试的产物不允许发出去**。
+
+本机与 CI 的归档哈希不同（`714d3787…` vs `bfb30641…`）是预期行为：本机 `rustc` 是
+1.96.0-nightly、CI 是 1.98.1 stable，工具链是域的输入之一，所以本来就应当产出不同的二进制。
+
+

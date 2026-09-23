@@ -117,16 +117,30 @@ pwsh scripts\ci\build-windows.ps1 -DomainCacheDir .muse-domain-cache
 （`dtolnay/rust-toolchain@stable`）和 Flutter 3.44.2（`subosito/flutter-action`）。
 `build-windows.ps1` 在本机也可以用同样的步骤跑，只有工具链来源不同。
 
-| 阶段 | 大致耗时 |
+| 阶段 | 大致耗时（`windows-2022`，实测） |
 | --- | --- |
-| checkout + 工具链 | 2-4 min |
-| `flutter precache --windows`（首次） | 1-2 min |
-| rust 域（`cargo test --workspace --locked`） | <1 min（命中后 0） |
-| dart 域（14 个包 + host 的 pub get/analyze/test） | 4-8 min |
-| flutter 域（`flutter build windows --release`） | 2-5 min（命中后 0） |
-| pack + verify | <1 min |
+| checkout + Rust + Flutter | ~2.2 min（Flutter `subosito/flutter-action` 约 110 s，Rust 约 7 s，checkout 约 5 s） |
+| Bootstrap（`flutter precache --windows`） | 首次 36 s，Flutter 缓存命中后 7 s |
+| Domain fingerprints | 5 s |
+| rust 域（`cargo test --workspace --locked`） | 冷构建约 1 min；命中后 0 |
+| dart 域（14 个包 + host 的 pub get/analyze/test） | 3-4 min，**每次都会跑** |
+| flutter 域（`flutter build windows --release`） | 冷构建约 2-3 min；命中后 0 |
+| pack + verify + 上传 | <5 s |
+| **整个 job** | **冷 9m16s / 热 6m57s**（见下表） |
 
 job `timeout-minutes: 120`；缓存策略见 [`windows-incremental-build.md`](windows-incremental-build.md)。
+实测 CI（commit `f39d949`，同一 commit 连续两次 dispatch）：
+
+| 运行 | job 用时 | Build 步骤 | 产物 SHA-256 |
+| --- | --- | --- | --- |
+| [run 35857369632](https://github.com/openmuseai/muse-clients/actions/runs/35857369632)（冷） | 556 s | 365 s | `bfb30641166f07dd…` |
+| [run 35858799593](https://github.com/openmuseai/muse-clients/actions/runs/35858799593)（热） | 417 s | 275 s | `bfb30641166f07dd…` |
+| [run 35860044525](https://github.com/openmuseai/muse-clients/actions/runs/35860044525)（`diagnose-windows.yml`） | ~2 min | —（不起构建） | — |
+
+热运行里 `Save rust cache` / `Save flutter cache` 两步是 `skipped`，即缓存确实命中；
+两次的产物哈希完全一致，说明"复用"没有改变产物。省下的 90 s 全部来自 rust + flutter 两个域，
+`dart` 域（60 多个测试文件）照常执行——这是刻意的，不能把没跑过测试的产物发出去。
+
 
 ## 排障
 
@@ -138,6 +152,10 @@ job `timeout-minutes: 120`；缓存策略见 [`windows-incremental-build.md`](wi
 | Dart 测试只在 Windows 失败 | 检查是不是 `/` 分隔符假设（`path.split('/')`）或者对 Windows 路径做 `contains()`——TOML 里的反斜杠是被转义的 |
 | `flutter pub get` 重新解析了依赖 | `pubspec.lock` 里记的是 `https://pub.flutter-io.cn`，runner 上默认是 `pub.dev`，pub 会重新解析并重写 lock。不影响构建正确性，但会让 lock 与仓库里的版本出现 diff；要固定就跑一次然后提交 |
 | 产物被判定为"复用"但其实过期 | 域指纹漏了输入。检查 `scripts/ci/lib/domain-plan.ps1` 的 `paths` 和 `toolchain`，并用 `-ForceRebuild` 做对照 |
+| `file INSTALL cannot find ".../build/native_assets/windows"` | 手工删了 `build/` 但没删 `.dart_tool/flutter_build/`：Flutter 认为 native assets 目标是最新的而跳过它，MSBuild 却仍按旧的 `cmake_install.cmake` 去装这个目录。要清就 `flutter clean`（它连 `.dart_tool` 一起清），别只删 `build/` |
+| 声明的资源目录里有文件没被打进包 | Flutter 的资源**目录**条目只包含该目录的**直接子文件**（`flutter_tools/lib/src/asset.dart` 的 `_parseAssetsFromFolder` 用的是非递归 `listSync()`），嵌套子目录里的文件会被静默丢掉，必须逐条列出来 |
+| Windows 包突然大了几十 MB | 同一个原因的另一面：`assets/engines/helix/` 下的 `hx` 是 56 MB 的 macOS 通用二进制，目录条目会把它一起打进 Windows 包（实测归档从 12.15 MB 涨到 31.95 MB）。目录条目也不能带 `platforms` 过滤，所以要过滤就得**逐条列文件**，像 `plugins/helix/pubspec.yaml` 里那样给 `hx` 单独写 `platforms: [macos]` |
+| 新增资源文件后没被打进包，但改 pubspec 后又好了 | Flutter 自己的 `flutter_build` 增量判断（`AssetBundle.needsBuild`）可能放过新增的大文件；改了 pubspec 会强制重建清单。怀疑资源清单过期时用 `flutter clean` 而不是只删 `build/` |
 
 拉失败日志：
 
@@ -148,11 +166,25 @@ pwsh scripts/ci/remote-build-windows.ps1 -RunId <id> -DownloadLogs
 
 ## 已验证 / 未验证
 
-- **已验证**：Windows x64 上 `cargo test --workspace --locked`、14 个 Dart 包的
-  `pub get`/`analyze`/`test`、host 的 `analyze`/`test`、`flutter build windows --release`
-  和 `dist/OpenMuse-windows-x64.zip` 全部通过；CI 上同一条路径通过。
+- **已验证**：
+  - 本机（Windows + Flutter 3.44.2 + MSVC 14.50）：`cargo test --workspace --locked`、14 个 Dart 包的
+    `pub get`/`analyze`/`test`、host 的 `analyze`/`test`（32 passed / 1 skipped）、
+    `flutter build windows --release` 和 `dist/OpenMuse-windows-x64.zip` + `verify` 全部通过；
+    冷构建与缓存复用两次的归档**逐字节一致**。
+  - 远程：`windows-build.yml` 冷（[35857369632](https://github.com/openmuseai/muse-clients/actions/runs/35857369632)）、
+    热（[35858799593](https://github.com/openmuseai/muse-clients/actions/runs/35858799593)）两次
+    `completed/success`，产物 `OpenMuse-windows-<sha>.zip`（12.4 MB）已下载核对，归档 SHA-256 与
+    `SHA256SUMS.txt` 一致；`diagnose-windows.yml`
+    （[35860044525](https://github.com/openmuseai/muse-clients/actions/runs/35860044525)）同样成功。
+  - `desktop-gates.yml`：push 触发的那次运行整体 `success`，Windows job 与 `windows-build.yml`
+    调的是同一个 `build-windows.ps1`。该文件的 macOS job 在 `f91bc1e` 之后已经接上真正的
+    `scripts/ci/build-macos.sh`（`continue-on-error` 已移除），所以门禁会如实反映两个平台。
 - **未验证**：Windows 安装器（Inno Setup / MSIX）、代码签名、SBOM 与完整第三方 notices；
-  Windows 上的 PNG/PDF Viewer 原生渲染、Helix `hx.exe` 的 Windows 引擎资产。
+  Windows 上的 PNG/PDF Viewer 原生渲染；**Windows 的 Helix 引擎资产**——仓库里 pin 的
+  `plugins/helix/assets/engines/helix/hx` 是 macOS 通用二进制（56 MB，Mach-O `cafebabe`），
+  Windows 需要的 `hx.exe` 不在仓库里，`resolveHelixExecutable()` 因此会退回到 PATH 上的 `hx`，
+  打包目录里没有引擎可执行文件，编辑器面板在真机上只能显示"引擎未内置"。
+
 
 ## macOS
 
