@@ -21,5 +21,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
 
 flutter:
+  # Listed file by file rather than as the directory `assets/engines/helix/`:
+  # a directory entry is expanded with a non-recursive listing
+  # (`_parseAssetsFromFolder` in flutter_tools), so a file two levels down is
+  # dropped silently, and it cannot carry a `platforms` filter either.
   assets:
-    - assets/engines/helix/
+    - assets/engines/helix/config.toml
+    - assets/engines/helix/LICENSE.MPL-2.0
+    - assets/engines/helix/README.txt
+    # OpenMuse-authored theme: source, not a staged engine artefact, so it ships
+    # on every platform.
+    - assets/engines/helix/runtime/themes/openmuse_dark.toml
+    # The pinned engine is a macOS Universal binary, and scripts/package_macos.sh
+    # asserts it lands next to these files inside the .app bundle. Windows looks
+    # for `hx.exe`, so bundling it there would only add 56 MB of Mach-O to the
+    # Windows package.
+    - path: assets/engines/helix/hx
+      platforms: [macos]
