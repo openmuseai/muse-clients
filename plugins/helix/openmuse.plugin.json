@@ -1,0 +1,33 @@
+{
+  "id": "com.openmuse.helix",
+  "name": "Helix Editor",
+  "version": "0.1.0",
+  "protocol": { "major": 1, "minor": 0 },
+  "runtime": "native-process",
+  "activation_events": ["onFileType:text", "onCommand:helix.open"],
+  "permissions": [
+    "filesystem.workspace.read",
+    "filesystem.workspace.write",
+    "process.pty",
+    "clipboard.read",
+    "clipboard.write"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "helix.open",
+        "title": "Open in Helix",
+        "required_permissions": ["filesystem.workspace.read"]
+      }
+    ],
+    "services": [],
+    "editors": [
+      {
+        "id": "helix.editor",
+        "extensions": ["txt", "md", "rs", "dart", "ts", "js", "json", "yaml", "toml"],
+        "priority": 50
+      }
+    ]
+  }
+}
+
