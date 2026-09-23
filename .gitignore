@@ -5,9 +5,8 @@
 # contracts and schemas, plugin manifests and their small assets, README.
 #
 # Ignored on purpose: build outputs, package-manager caches, native toolchain
-# scaffolding, vendored engine binaries, and development-process material
-# (plans, reviews, gate results, packaging helpers) that is not part of the
-# shipped product.
+# scaffolding, generated runtime closures and release archives. Build scripts,
+# architecture/provenance docs and pinned third-party inputs are source assets.
 # =============================================================================
 
 # --- Build outputs -----------------------------------------------------------
@@ -51,12 +50,18 @@ app.*.map.json
 # --- Node / sidecar runtime --------------------------------------------------
 **/node_modules/
 
-# --- Vendored engine binaries ------------------------------------------------
-# The Helix engine is staged locally by the packaging helpers; only the plugin
-# wrapper source and its manifest belong in the repository.
+# --- Vendored engine and third-party binaries --------------------------------
+# The Helix engine binary and the staged runtime are large generated inputs: the
+# packaging helpers require them in the working tree, but they are not committed.
+# The manifests, lockfiles, checksums, licence texts and publish orders that
+# describe them are tracked, as are the OpenMuse-authored overrides below.
 /plugins/helix/assets/engines/helix/hx
-/plugins/helix/assets/engines/helix/runtime/
-/plugins/helix/assets/engines/helix/LICENSE.MPL-2.0
+/plugins/helix/assets/engines/helix/runtime/*
+# OpenMuse-authored theme: source, not a staged engine artefact.
+!/plugins/helix/assets/engines/helix/runtime/themes
+/plugins/helix/assets/engines/helix/runtime/themes/*
+!/plugins/helix/assets/engines/helix/runtime/themes/openmuse_dark.toml
+/third_party/dsh/tarballs/**/*.tgz
 
 # --- Release bundles ---------------------------------------------------------
 *.zip
@@ -65,11 +70,7 @@ app.*.map.json
 *.tar.gz
 
 # --- Development-process material -------------------------------------------
-# Working plans, parity matrices, review notes, gate results and packaging
-# helpers stay local; they document how the product was arrived at, not what
-# the product is.
-/docs/
-/scripts/
+# Keep architecture and release scripts in the independent source repository.
 /tmp/
 /scratch/
 /notes/
