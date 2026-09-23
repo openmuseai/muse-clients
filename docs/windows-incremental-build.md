@@ -132,18 +132,23 @@ powershell scripts/ci/build-windows.ps1             -DomainCacheDir .muse-domain
 > CI 上 run1/run2 哈希一致也是同一个原因：`actions/cache` 用 tar 搬运文件，mtime 被保留了下来。
 > 需要跨机器可复现的哈希时，要另外把 ZIP 条目的时间戳归一化。
 
-### 7.2 GitHub CI（`windows-2022`，commit `f39d949`，同一 commit 连续两次 dispatch）
+### 7.2 GitHub CI（`windows-2022`，同一 commit 连续两次 dispatch）
 
-| 运行 | job 用时 | Build 步骤 | domains | 归档 SHA-256 |
-| --- | --- | --- | --- | --- |
-| [run 35857369632](https://github.com/openmuseai/muse-clients/actions/runs/35857369632)（冷） | 556 s | 365 s | `rust=build,dart=build,flutter=build,pack=build` | `bfb30641166f07dd…` |
-| [run 35858799593](https://github.com/openmuseai/muse-clients/actions/runs/35858799593)（热） | 417 s | 275 s | `rust=cache,dart=build,flutter=cache,pack=build` | `bfb30641166f07dd…` |
+| 运行 | job 用时 | domains | 归档 SHA-256 |
+| --- | --- | --- | --- |
+| [run 35857369632](https://github.com/openmuseai/muse-clients/actions/runs/35857369632)（冷，`f39d949`） | 556 s | `rust=build,dart=build,flutter=build,pack=build` | `bfb30641166f07dd…` |
+| [run 35858799593](https://github.com/openmuseai/muse-clients/actions/runs/35858799593)（热，`f39d949`） | 417 s | `rust=cache,dart=build,flutter=cache,pack=build` | `bfb30641166f07dd…` |
+| [run 35865981739](https://github.com/openmuseai/muse-clients/actions/runs/35865981739)（合并 macOS 改动后，`c50a192`） | 477 s | `rust=cache,dart=build,flutter=build,pack=build` | `dd58110f63d3f3a1…` |
 
 第二次运行里 `Save rust cache` / `Save flutter cache` 两步是 **skipped**（`cache-hit == 'true'`），
 说明缓存确实命中；产物哈希与冷构建完全一致。省下的 90 s 全部来自 rust + flutter 两个域，
 而 `dart` 域照常跑完了 14 个包加 host 的 analyze/test——这是刻意的：**没跑过测试的产物不允许发出去**。
+第三次是合并后的复验：rust 命中缓存、flutter 因为插件资源声明变了而重建，产物 12.4 MB / 18 个条目。
+同一个 commit 的 `desktop-gates`
+（[run 35865929450](https://github.com/openmuseai/muse-clients/actions/runs/35865929450)）Windows 和 macOS
+两个 job **都是 success**。
 
-本机与 CI 的归档哈希不同（`714d3787…` vs `bfb30641…`）是预期行为：本机 `rustc` 是
+本机与 CI 的归档哈希不同（`714d3787…` vs `dd58110f…`）是预期行为：本机 `rustc` 是
 1.96.0-nightly、CI 是 1.98.1 stable，工具链是域的输入之一，所以本来就应当产出不同的二进制。
 
 

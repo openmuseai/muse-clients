@@ -176,8 +176,12 @@ pwsh scripts/ci/remote-build-windows.ps1 -RunId <id> -DownloadLogs
     `completed/success`，产物 `OpenMuse-windows-<sha>.zip`（12.4 MB）已下载核对，归档 SHA-256 与
     `SHA256SUMS.txt` 一致；`diagnose-windows.yml`
     （[35860044525](https://github.com/openmuseai/muse-clients/actions/runs/35860044525)）同样成功。
-  - `desktop-gates.yml`：push 触发的那次运行整体 `success`，Windows job 与 `windows-build.yml`
-    调的是同一个 `build-windows.ps1`。该文件的 macOS job 在 `f91bc1e` 之后已经接上真正的
+    合并 macOS 改动之后又跑了一次（[35865981739](https://github.com/openmuseai/muse-clients/actions/runs/35865981739)，
+    `c50a192`）：477 s、`completed/success`，产物 12.4 MB / 18 个条目，里面**没有** 56 MB 的 macOS
+    引擎二进制，`openmuse_dark.toml` 在包内，归档哈希 `dd58110f63d3f3a1…` 与 `SHA256SUMS.txt` 一致。
+  - `desktop-gates.yml`（[35865929450](https://github.com/openmuseai/muse-clients/actions/runs/35865929450)）：
+    push 触发的门禁里 **Windows 和 macOS 两个 job 都是 `success`**。Windows job 与
+    `windows-build.yml` 调的是同一个 `build-windows.ps1`；macOS job 在 `f91bc1e` 之后接的是真正的
     `scripts/ci/build-macos.sh`（`continue-on-error` 已移除），所以门禁会如实反映两个平台。
 - **未验证**：Windows 安装器（Inno Setup / MSIX）、代码签名、SBOM 与完整第三方 notices；
   Windows 上的 PNG/PDF Viewer 原生渲染；**Windows 的 Helix 引擎资产**——仓库里 pin 的
