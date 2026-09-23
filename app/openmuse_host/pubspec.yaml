@@ -1,0 +1,32 @@
+name: openmuse_host
+description: OpenMuse desktop host shell.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  crypto: ^3.0.6
+  flutter:
+    sdk: flutter
+  openmuse_builtin_plugins:
+    path: ../../distribution/openmuse_builtin_plugins
+  openmuse_plugin_sdk:
+    path: ../../packages/openmuse_plugin_sdk
+  path: ^1.9.1
+  path_provider: ^2.1.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  openmuse_dsh_plugin:
+    path: ../../plugins/dsh-agent
+  openmuse_helix_plugin:
+    path: ../../plugins/helix
+
+flutter:
+  uses-material-design: true

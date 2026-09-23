@@ -1,0 +1,40 @@
+PODS:
+  - flutter_pty (0.0.1):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+  - openmuse_dsh_plugin (0.1.0):
+    - FlutterMacOS
+  - openmuse_file_viewer (0.1.0):
+    - FlutterMacOS
+  - openmuse_native_text_gate (0.1.0):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - flutter_pty (from `Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - openmuse_dsh_plugin (from `Flutter/ephemeral/.symlinks/plugins/openmuse_dsh_plugin/macos`)
+  - openmuse_file_viewer (from `Flutter/ephemeral/.symlinks/plugins/openmuse_file_viewer/macos`)
+  - openmuse_native_text_gate (from `Flutter/ephemeral/.symlinks/plugins/openmuse_native_text_gate/macos`)
+
+EXTERNAL SOURCES:
+  flutter_pty:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  openmuse_dsh_plugin:
+    :path: Flutter/ephemeral/.symlinks/plugins/openmuse_dsh_plugin/macos
+  openmuse_file_viewer:
+    :path: Flutter/ephemeral/.symlinks/plugins/openmuse_file_viewer/macos
+  openmuse_native_text_gate:
+    :path: Flutter/ephemeral/.symlinks/plugins/openmuse_native_text_gate/macos
+
+SPEC CHECKSUMS:
+  flutter_pty: 1e360feaf8b1a213d2d50da3c076005b8eef1eee
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  openmuse_dsh_plugin: 5f8716962236c0ca7f90a80f5f5074ec9cd692cb
+  openmuse_file_viewer: 3a156b24fb05760af92557feb35125acea5986d0
+  openmuse_native_text_gate: 2524a8796b346bd1033fdf4cfd864aaa8c2816d8
+
+PODFILE CHECKSUM: 54d867c82ac51cbd61b565781b9fada492027009
+
+COCOAPODS: 1.16.2
