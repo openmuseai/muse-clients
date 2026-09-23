@@ -1,0 +1,39 @@
+{
+  "id": "com.openmuse.open-file-viewer",
+  "name": "Open File Viewer",
+  "version": "0.1.0",
+  "protocol": { "major": 1, "minor": 0 },
+  "runtime": "web-view",
+  "activation_events": ["onFileType:image", "onFileType:pdf"],
+  "permissions": ["filesystem.workspace.read"],
+  "contributes": {
+    "commands": [
+      {
+        "id": "viewer.open",
+        "title": "Open Preview",
+        "required_permissions": ["filesystem.workspace.read"]
+      }
+    ],
+    "services": [
+      {
+        "id": "resource.preview",
+        "version": 1,
+        "priority": 10,
+        "required_permissions": ["filesystem.workspace.read"]
+      }
+    ],
+    "editors": [
+      {
+        "id": "viewer.image",
+        "extensions": ["png", "jpg", "jpeg", "gif", "webp", "svg"],
+        "priority": 20
+      },
+      {
+        "id": "viewer.pdf",
+        "extensions": ["pdf"],
+        "priority": 20
+      }
+    ]
+  }
+}
+
