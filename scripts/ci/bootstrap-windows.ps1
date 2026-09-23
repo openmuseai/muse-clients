@@ -75,13 +75,15 @@ Assert-Command -Name 'dart' -Hint 'Install Flutter; dart ships with it.'
 $targets = @($RustTargets -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 if (-not $SkipRustTargets) {
     foreach ($target in $targets) {
-        Write-Step "rustup target add $target"
-        & rustup target add $target
-        if ($LASTEXITCODE -ne 0) { throw "rustup target add $target failed ($LASTEXITCODE)" }
+        Write-Host "==> rustup target add $target" -ForegroundColor Cyan
+        Invoke-OpenMuseNative -FilePath 'rustup' -Arguments @('target', 'add', $target) -What "rustup target add $target"
     }
 }
 
 Write-Step 'checking the Flutter Windows desktop toolchain'
+# The first invocation may build the flutter tool and download the Dart SDK, so
+# run it once without capturing before parsing the version line.
+Invoke-OpenMuseNative -FilePath 'flutter' -Arguments @('--version') -What 'flutter --version'
 $flutterVersion = (Get-OpenMuseCommandVersion -Command 'flutter')
 if ($ExpectedFlutterVersion -and $flutterVersion -notmatch [regex]::Escape($ExpectedFlutterVersion)) {
     throw "Flutter $ExpectedFlutterVersion was requested but '$flutterVersion' is on PATH."
@@ -90,13 +92,11 @@ Write-Host "    $flutterVersion"
 
 # `flutter config --enable-windows-desktop` is idempotent and makes the desktop
 # target explicit rather than dependent on the machine's previous state.
-& flutter config --enable-windows-desktop | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "flutter config failed ($LASTEXITCODE)" }
+Invoke-OpenMuseNative -FilePath 'flutter' -Arguments @('config', '--enable-windows-desktop') -What 'flutter config'
 
 if (-not $SkipPrecache) {
     Write-Step 'flutter precache --windows'
-    & flutter precache --windows
-    if ($LASTEXITCODE -ne 0) { throw "flutter precache failed ($LASTEXITCODE)" }
+    Invoke-OpenMuseNative -FilePath 'flutter' -Arguments @('precache', '--windows') -What 'flutter precache'
 }
 
 $vs = Get-OpenMuseVisualStudioIdentity

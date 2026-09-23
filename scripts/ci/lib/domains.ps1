@@ -91,19 +91,66 @@ function Get-OpenMuseCommandVersion {
     <#
     .SYNOPSIS
     First line of a command's version output, or 'absent' when it is not usable.
+
+    .DESCRIPTION
+    `dart --version` writes to stderr, and Windows PowerShell 5.1 escalates a
+    native command's stderr to a terminating error as soon as the streams are
+    merged. Relax the preference for the duration of the call so the version is
+    read instead of the whole probe being reported as absent -- otherwise a local
+    5.1 run and a CI PowerShell 7 run would compute different fingerprints.
     #>
     param(
         [Parameter(Mandatory)][string] $Command,
         [string[]] $Arguments = @('--version')
     )
 
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
     try {
         $output = & $Command @Arguments 2>&1 | Select-Object -First 1
         if ($null -eq $output) { return 'absent' }
         return ($output.ToString()).Trim()
     } catch {
         return 'absent'
+    } finally {
+        $ErrorActionPreference = $previous
     }
+}
+
+function Invoke-OpenMuseNative {
+    <#
+    .SYNOPSIS
+    Run a native command and fail on a non-zero exit, in 5.1 and 7 alike.
+
+    .DESCRIPTION
+    stderr from a native command is a diagnostic, not a failure: rustup and
+    flutter both narrate progress there. Windows PowerShell 5.1 turns such a line
+    into a terminating error while $ErrorActionPreference is Stop, so relax it
+    around the call and let the exit code decide.
+    #>
+    param(
+        [Parameter(Mandatory)][string] $FilePath,
+        [Parameter(Mandatory)][AllowEmptyCollection()][string[]] $Arguments,
+        [string] $WorkingDirectory = '',
+        [string] $What = ''
+    )
+
+    $label = if ($What) { $What } else { "$FilePath $($Arguments -join ' ')" }
+    $previous = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $exitCode = 0
+    try {
+        if ($WorkingDirectory) {
+            Push-Location $WorkingDirectory
+            try { & $FilePath @Arguments; $exitCode = $LASTEXITCODE } finally { Pop-Location }
+        } else {
+            & $FilePath @Arguments
+            $exitCode = $LASTEXITCODE
+        }
+    } finally {
+        $ErrorActionPreference = $previous
+    }
+    if ($exitCode -ne 0) { throw "$label failed with exit code $exitCode" }
 }
 
 function Get-OpenMuseVisualStudioIdentity {

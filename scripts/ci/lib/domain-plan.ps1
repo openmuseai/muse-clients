@@ -44,7 +44,8 @@ function Get-OpenMuseDomainPlan {
         paths       = $rustPaths
         fingerprint = Get-OpenMuseFingerprint -RepoRoot $RepoRoot -Paths $rustPaths `
             -Toolchain $rustToolchain -Parameters ([ordered]@{ rustTarget = $RustTarget; profile = $Profile })
-        outputs     = @('target')
+        # Absolute, because the reuse check must not depend on the caller's cwd.
+        outputs     = @((Join-Path $RepoRoot 'target'))
         cached      = $true
     }
 
@@ -62,7 +63,7 @@ function Get-OpenMuseDomainPlan {
         paths       = $dartPaths
         fingerprint = Get-OpenMuseFingerprint -RepoRoot $RepoRoot -Paths $dartPaths `
             -Toolchain $flutterToolchain -Parameters ([ordered]@{ domain = 'flutter'; profile = $Profile })
-        outputs     = @("$app/build/windows/x64/runner/Release/OpenMuse.exe")
+        outputs     = @((Join-Path $RepoRoot "$app/build/windows/x64/runner/Release/OpenMuse.exe"))
         cached      = $true
     }
 
@@ -77,7 +78,7 @@ function Get-OpenMuseDomainPlan {
                 flutter = $plan['flutter'].fingerprint
                 profile = $Profile
             })
-        outputs     = @('dist/OpenMuse-windows-x64.zip')
+        outputs     = @((Join-Path $RepoRoot 'dist/OpenMuse-windows-x64.zip'))
         cached      = $false
     }
 

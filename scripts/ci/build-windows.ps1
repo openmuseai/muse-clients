@@ -117,15 +117,7 @@ function Invoke-Native {
         return
     }
 
-    Push-Location $WorkingDirectory
-    try {
-        & $FilePath @Arguments
-        if ($LASTEXITCODE -ne 0) {
-            throw "$label failed with exit code $LASTEXITCODE"
-        }
-    } finally {
-        Pop-Location
-    }
+    Invoke-OpenMuseNative -FilePath $FilePath -Arguments $Arguments -WorkingDirectory $WorkingDirectory -What $label
 }
 
 function Test-Reusable {
