@@ -1,0 +1,22 @@
+{
+  "id": "com.openmuse.dsh-agent",
+  "name": "DSH Agent",
+  "version": "0.1.0",
+  "protocol": { "major": 1, "minor": 0 },
+  "runtime": "native-process",
+  "activation_events": ["onPanel:dsh.agent"],
+  "permissions": [
+    "workspace.context.read",
+    "resource.open.request",
+    "process.sidecar",
+    "credentials.model.use"
+  ],
+  "contributes": {
+    "commands": [],
+    "services": [],
+    "editors": [],
+    "panels": [
+      { "id": "dsh.agent", "region": "right-sidebar", "priority": 100 }
+    ]
+  }
+}
