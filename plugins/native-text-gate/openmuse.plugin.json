@@ -1,0 +1,21 @@
+{
+  "id": "com.openmuse.native-text-gate",
+  "name": "Native Text Gate",
+  "version": "0.1.0",
+  "protocol": { "major": 1, "minor": 0 },
+  "runtime": "built-in",
+  "activation_events": ["onFileType:native-gate"],
+  "permissions": [],
+  "contributes": {
+    "commands": [],
+    "services": [],
+    "editors": [
+      {
+        "id": "native-text.gate",
+        "extensions": ["native-gate"],
+        "priority": 100
+      }
+    ],
+    "panels": []
+  }
+}
