@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openmuse.local/schemas/openmuse.plugin.v1.schema.json",
+  "title": "OpenMuse Plugin Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "version", "protocol", "runtime", "contributes"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$" },
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+].*)?$" },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["major", "minor"],
+      "properties": {
+        "major": { "type": "integer", "minimum": 1 },
+        "minor": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "runtime": { "enum": ["built-in", "native-process", "web-view"] },
+    "activation_events": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "permissions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "contributes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commands": { "type": "array", "items": { "$ref": "#/$defs/command" } },
+        "services": { "type": "array", "items": { "$ref": "#/$defs/service" } },
+        "editors": { "type": "array", "items": { "$ref": "#/$defs/editor" } },
+        "panels": { "type": "array", "items": { "$ref": "#/$defs/panel" } }
+      }
+    }
+  },
+  "$defs": {
+    "permissionList": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "required_permissions": { "$ref": "#/$defs/permissionList" }
+      }
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "integer", "minimum": 1 },
+        "priority": { "type": "integer" },
+        "required_permissions": { "$ref": "#/$defs/permissionList" }
+      }
+    },
+    "editor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "extensions"],
+      "properties": {
+        "id": { "type": "string" },
+        "extensions": { "type": "array", "items": { "type": "string" }, "minItems": 1, "uniqueItems": true },
+        "priority": { "type": "integer" }
+      }
+    },
+    "panel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "region"],
+      "properties": {
+        "id": { "type": "string" },
+        "region": { "enum": ["left-sidebar", "editor", "right-sidebar", "bottom-panel"] },
+        "priority": { "type": "integer" }
+      }
+    }
+  }
+}
