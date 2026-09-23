@@ -1,0 +1,129 @@
+name: macOS build
+
+# Thin caller. The build itself is scripts/ci/build-macos.sh, which is also what
+# desktop-gates.yml runs. This file checks the repository out, installs the
+# toolchain, calls that script, and uploads dist/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Build profile
+        type: choice
+        options:
+          - release
+          - debug
+        default: release
+      rust_targets:
+        description: Comma-separated rustup targets (the runner arch is packaged)
+        type: string
+        default: aarch64-apple-darwin
+      skip_tests:
+        description: Skip the Dart and Rust test suites
+        type: boolean
+        default: false
+      retention_days:
+        description: Artifact retention in days
+        type: string
+        default: "14"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: "3.44.2"
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  macos:
+    name: macOS ${{ inputs.profile || 'release' }}
+    runs-on: macos-14
+    timeout-minutes: 180
+    env:
+      PROFILE: ${{ inputs.profile || 'release' }}
+      RUST_TARGETS: ${{ inputs.rust_targets || 'aarch64-apple-darwin' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ env.RUST_TARGETS }}
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: npm
+          cache-dependency-path: third_party/dsh/package-lock.json
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Bootstrap
+        run: |
+          ./scripts/ci/bootstrap-macos.sh \
+            --rust-targets "$RUST_TARGETS" \
+            --expected-flutter-version "$FLUTTER_VERSION"
+
+      - name: Build
+        run: |
+          args=(--profile "$PROFILE" --rust-targets "$RUST_TARGETS")
+          if [ "${{ inputs.skip_tests || false }}" = "true" ]; then
+            args+=(--skip-tests)
+          fi
+          ./scripts/ci/build-macos.sh "${args[@]}"
+
+      - name: Upload archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: OpenMuse-macos-${{ github.sha }}
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/build-info.txt
+          if-no-files-found: error
+          retention-days: ${{ fromJSON(inputs.retention_days || '14') }}
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## macOS build"
+            echo
+            echo "Download the zip from this **run** page: **Artifacts → \`OpenMuse-macos-${GITHUB_SHA}\`**."
+            echo
+            if [ -d dist ]; then
+              echo "| artifact | size |"
+              echo "| --- | --- |"
+              for item in dist/*; do
+                [ -e "$item" ] || continue
+                name="$(basename "$item")"
+                mb="$(python3 -c 'import os,sys; print("%.1f" % (os.path.getsize(sys.argv[1]) / 1048576))' "$item")"
+                echo "| ${name} | ${mb} MB |"
+              done
+            else
+              echo "No artifacts were produced under \`dist/\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

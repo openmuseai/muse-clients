@@ -5,35 +5,41 @@ on:
   pull_request:
 
 jobs:
-  # The macOS gate is not green yet and cannot be fixed from a Windows machine:
-  # scripts/package_macos.sh starts with scripts/stage_helix.sh, which requires
-  # the pinned Universal `hx`, its runtime (languages.toml/grammars/queries) and
-  # the darwin Node tarballs under third_party/node/. None of those large binary
-  # inputs are committed (see .gitignore), so packaging fails before it compiles
-  # anything. The job is kept and allowed to fail so the gap stays visible in the
-  # UI instead of being deleted; see docs/windows-ci.md, "Known gaps".
+  # Same script as .github/workflows/macos-build.yml, so the gate and the
+  # releasable package can never diverge.
   macos:
     runs-on: macos-14
-    continue-on-error: true
+    timeout-minutes: 180
+    env:
+      FLUTTER_VERSION: "3.44.2"
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.2
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+      - run: flutter config --enable-macos-desktop
       - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-node@v4
         with:
           node-version: 22.19.0
           cache: npm
           cache-dependency-path: third_party/dsh/package-lock.json
-      - run: cargo test --workspace --locked
-      - run: ./scripts/package_macos.sh
+      - name: Bootstrap
+        run: ./scripts/ci/bootstrap-macos.sh --expected-flutter-version "${{ env.FLUTTER_VERSION }}"
+      - name: Build, test and package
+        run: ./scripts/ci/build-macos.sh
       - uses: actions/upload-artifact@v4
         with:
           name: OpenMuse-macos-unsigned
-          path: dist/OpenMuse-macos.zip
+          path: |
+            dist/OpenMuse-macos.zip
+            dist/SHA256SUMS.txt
+            dist/build-info.txt
+          if-no-files-found: error
 
   # Same script as .github/workflows/windows-build.yml, so the gate and the
   # releasable package can never diverge.

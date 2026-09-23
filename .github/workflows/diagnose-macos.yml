@@ -1,0 +1,72 @@
+name: Diagnose macOS toolchain
+
+# Answers "why can't the macOS build see Xcode / Flutter?" without running the
+# full pipeline. Same thin-caller shape as macos-build.yml. Minutes, not hours.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_bootstrap:
+        description: Run bootstrap-macos.sh first
+        type: boolean
+        default: true
+      check_build:
+        description: Also run flutter create + flutter build macos on a scratch project
+        type: boolean
+        default: true
+      flutter_version:
+        description: Flutter version to install
+        type: string
+        default: 3.44.2
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: macOS toolchain
+    runs-on: macos-14
+    timeout-minutes: 30
+    env:
+      FLUTTER_VERSION: ${{ inputs.flutter_version }}
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+
+      - name: Bootstrap
+        if: inputs.run_bootstrap
+        run: |
+          ./scripts/ci/bootstrap-macos.sh \
+            --rust-targets aarch64-apple-darwin \
+            --expected-flutter-version "$FLUTTER_VERSION" \
+            --skip-precache
+
+      - name: Diagnose
+        env:
+          CHECK_BUILD: ${{ inputs.check_build }}
+        run: |
+          args=()
+          if [ "$CHECK_BUILD" = "true" ]; then
+            args+=(--check-build)
+          fi
+          ./scripts/ci/diagnose-macos.sh "${args[@]}"

@@ -1,0 +1,293 @@
+[(line_comment) (block_comment)] @comment
+
+; Different types:
+(string_value) @string
+(bool_value) @constant.builtin.boolean
+
+; Constants
+
+(escape_sequence) @constant.character.escape
+
+(color_value) @constant
+
+[
+  (children_identifier)
+  (easing_kind_identifier)
+] @constant.builtin
+
+[
+  (int_value)
+  (physical_length_value)
+] @constant.numeric.integer
+
+[
+  (float_value)
+  (percent_value)
+  (length_value)
+  (duration_value)
+  (angle_value)
+  (relative_font_size_value)
+] @constant.numeric.float
+
+(purity) @keyword.storage.modifier
+
+(function_visibility) @keyword.storage.modifier
+
+(property_visibility) @keyword.storage.modifier
+
+(builtin_type_identifier) @type.builtin
+
+(reference_identifier) @variable.builtin
+
+(type
+  [
+    (type_list)
+    (user_type_identifier)
+    (anon_struct_block)
+  ]) @type
+
+(user_type_identifier) @type
+
+; Functions and callbacks
+(argument) @variable.parameter
+
+(function_call
+  name: (_) @function)
+
+; definitions
+(callback
+  name: (_) @function)
+
+(callback_alias
+  name: (_) @function)
+
+(callback_event
+  name: (simple_identifier) @function)
+
+(enum_definition
+  name: (_) @type.enum)
+
+(function_definition
+  name: (_) @function)
+
+(function_declaration
+  name: (_) @function)
+
+(struct_definition
+  name: (_) @type)
+
+(typed_identifier
+  type: (_) @type)
+
+; Operators
+(binary_expression
+  op: (_) @operator)
+
+(unary_expression
+  op: (_) @operator)
+
+[
+  (comparison_operator)
+  (mult_prec_operator)
+  (add_prec_operator)
+  (unary_prec_operator)
+  (assignment_prec_operator)
+] @operator
+
+[
+  ":="
+  "=>"
+  "->"
+  "<=>"
+] @operator
+
+[
+  ";"
+  "."
+  ","
+] @punctuation.delimiter
+
+[
+  "("
+  ")"
+  "["
+  "]"
+  "{"
+  "}"
+] @punctuation.bracket
+
+(property
+  [
+    "<"
+    ">"
+  ] @punctuation.bracket)
+
+; Properties, constants and variables
+(component
+  id: (simple_identifier) @constant)
+
+(property
+  name: (simple_identifier) @variable)
+
+(binding_alias
+  name: (simple_identifier) @variable)
+
+(struct_field_definition
+  name: (simple_identifier) @variable.other.member)
+
+(anon_struct_assignment
+  member: (simple_identifier) @variable.other.member)
+
+(property_assignment
+  property: (simple_identifier) @variable)
+
+(state_definition
+  name: (simple_identifier) @variable
+  "when" @keyword)
+
+(callback
+  name: (simple_identifier) @variable)
+
+(typed_identifier
+  name: (_) @variable)
+
+(simple_indexed_identifier
+  (simple_identifier) @variable)
+
+(expression
+  (simple_identifier) @variable)
+
+; Attributes
+[
+  (linear_gradient_identifier)
+  (radial_gradient_identifier)
+  (radial_gradient_kind)
+  (conic_gradient_identifier)
+] @attribute
+
+(image_call
+  "@image-url" @attribute)
+
+(tr
+  "@tr" @attribute)
+
+(rust_attr
+  "@rust-attr" @attribute)
+
+(keys
+  "@keys" @attribute)
+
+(markdown
+  "@markdown" @attribute)
+
+(keys
+  (simple_identifier) @constant)
+
+(keys
+  "+" @operator)
+
+; Keywords
+(animate_option_identifier) @keyword
+
+(export_statement
+  "export" @keyword.control.import)
+
+(exported_definition
+  "export" @keyword.control.import)
+
+(if_statement
+  "if" @keyword.control.conditional)
+
+(if_expr
+  [
+    "if"
+    "else"
+  ] @keyword.control.conditional)
+
+(ternary_expression
+  [
+    "?"
+    ":"
+  ] @keyword.control.conditional)
+
+(animate_statement
+  "animate" @keyword)
+
+(callback
+  "callback" @keyword.function)
+
+(component_definition
+  "component" @keyword.storage.type)
+
+(component_modifier
+  "inherits" @keyword.storage.type)
+
+(uses_clause
+  "uses" @keyword.storage.type)
+
+(implements_clause
+  "implements" @keyword.storage.type)
+
+(used_interface
+  "from" @keyword.control.import
+  source: (_) @variable)
+
+(changed_event
+  "changed" @keyword)
+
+(gradient_call
+  [
+    "at"
+    "from"
+  ] @keyword)
+
+(enum_definition
+  "enum" @keyword.storage.type)
+
+(for_loop
+  [
+    "for"
+    "in"
+  ] @keyword.control.repeat)
+
+(function_definition
+  "function" @keyword.function)
+
+(function_declaration
+  "function" @keyword.function)
+
+(let_statement
+  "let" @keyword.storage.type
+  name: (_) @variable
+  "=" @operator)
+
+(global_definition
+  "global" @keyword.storage.type)
+
+(return_statement
+  "return" @keyword.control.return)
+
+(import_statement
+  [
+    "import"
+    "from"
+  ] @keyword.control.import)
+
+(import_type
+  "as" @keyword.control.import)
+
+(property
+  "property" @keyword.storage.type)
+
+(states_definition
+  "states" @keyword)
+
+(struct_definition
+  "struct" @keyword.storage.type)
+
+(transitions_definition
+  [
+    "transitions"
+    "in"
+    "out"
+  ] @keyword)

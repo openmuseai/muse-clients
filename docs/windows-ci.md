@@ -11,7 +11,7 @@ Rust crates（`crates/`）和打包脚本（`scripts/`）都在同一个 checkou
 | --- | --- |
 | `.github/workflows/windows-build.yml` | 出包流水线：装工具链 → 算指纹 → 搬缓存 → 调 `build-windows.ps1` → 上传产物 |
 | `.github/workflows/diagnose-windows.yml` | 只跑工具链探针，几分钟出结果，用来回答"为什么看不到 Visual Studio" |
-| `.github/workflows/desktop-gates.yml` | push/PR 门禁；Windows job 调的是同一个 `build-windows.ps1`，macOS job 见"已知缺口" |
+| `.github/workflows/desktop-gates.yml` | push/PR 门禁；Windows job 调 `build-windows.ps1`，macOS job 调 `build-macos.sh` |
 | `scripts/ci/bootstrap-windows.ps1` | 装 rustup target、开 Windows desktop、precache Flutter 产物，并报告工具链身份 |
 | `scripts/ci/build-windows.ps1` | **唯一的构建入口**：rust / dart / flutter / pack / verify 五个阶段 |
 | `scripts/ci/lib/domains.ps1` | 指纹、工具链身份、域标记的读写 |
@@ -154,10 +154,8 @@ pwsh scripts/ci/remote-build-windows.ps1 -RunId <id> -DownloadLogs
 - **未验证**：Windows 安装器（Inno Setup / MSIX）、代码签名、SBOM 与完整第三方 notices；
   Windows 上的 PNG/PDF Viewer 原生渲染、Helix `hx.exe` 的 Windows 引擎资产。
 
-## 已知缺口（macOS）
+## macOS
 
-`desktop-gates.yml` 的 macOS job 目前**跑不起来**，而且无法从 Windows 机器上修：它第一步就是
-`scripts/stage_helix.sh`，要求仓库里有固定的 Universal `hx`、`runtime/languages.toml`、
-`runtime/grammars/`、`runtime/queries/` 和 `third_party/node/v22.19.0/node-v22.19.0-darwin-*.tar.gz`；
-这些大二进制输入按 `.gitignore` 的约定**没有入库**。因此该 job 标了 `continue-on-error: true`：
-它保留在 UI 里让缺口可见，但不会掩盖 Windows 的结果。补齐这些输入后应当去掉该标记。
+macOS 出包是另一条流水线，见 [`macos-ci.md`](macos-ci.md)。`desktop-gates.yml` 的 macOS job
+和 `macos-build.yml` 调的是同一个 `scripts/ci/build-macos.sh`。出包需要的 Universal `hx`、
+Helix runtime、DSH tarball 和 darwin Node 归档已经在仓库里。

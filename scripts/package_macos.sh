@@ -1,10 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+profile="release"
+skip_tests=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --profile) profile="$2"; shift 2 ;;
+    --skip-tests) skip_tests=1; shift ;;
+    -h|--help)
+      echo "usage: package_macos.sh [--profile release|debug] [--skip-tests]"
+      exit 0
+      ;;
+    *) echo "unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+case "$profile" in
+  release) product_dir="Release" ;;
+  debug) product_dir="Debug" ;;
+  *) echo "profile must be release or debug" >&2; exit 2 ;;
+esac
+
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 app_root="$repo_root/app/openmuse_host"
 dist_root="$repo_root/dist"
-app_path="$app_root/build/macos/Build/Products/Release/OpenMuse.app"
+app_path="$app_root/build/macos/Build/Products/${product_dir}/OpenMuse.app"
 archive_path="$dist_root/OpenMuse-macos.zip"
 dsh_closure="$repo_root/target/dsh-closure"
 node_runtime="$repo_root/target/node-v22.19.0-universal"
@@ -23,8 +42,10 @@ if [[ "${OPENMUSE_CLEAN_BUILD:-1}" == "1" ]]; then
 fi
 flutter pub get
 flutter analyze
-flutter test
-flutter build macos --release
+if [[ "$skip_tests" -eq 0 ]]; then
+  flutter test
+fi
+flutter build macos "--${profile}"
 
 test -d "$app_path"
 bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app_path/Contents/Info.plist")"

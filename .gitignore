@@ -54,24 +54,20 @@ app.*.map.json
 # --- Node / sidecar runtime --------------------------------------------------
 **/node_modules/
 
-# --- Vendored engine and third-party binaries --------------------------------
-# The Helix engine binary and the staged runtime are large generated inputs: the
-# packaging helpers require them in the working tree, but they are not committed.
-# The manifests, lockfiles, checksums, licence texts and publish orders that
-# describe them are tracked, as are the OpenMuse-authored overrides below.
-/plugins/helix/assets/engines/helix/hx
-/plugins/helix/assets/engines/helix/runtime/*
-# OpenMuse-authored theme: source, not a staged engine artefact.
-!/plugins/helix/assets/engines/helix/runtime/themes
+# --- Pinned engine and third-party build inputs ------------------------------
+# A fresh checkout has to be able to run scripts/package_macos.sh. Generated
+# node_modules stays ignored. Only the two themes the packager stages are kept;
+# the rest of the upstream theme catalogue is not.
 /plugins/helix/assets/engines/helix/runtime/themes/*
+!/plugins/helix/assets/engines/helix/runtime/themes/onelight.toml
 !/plugins/helix/assets/engines/helix/runtime/themes/openmuse_dark.toml
-/third_party/dsh/tarballs/**/*.tgz
 
 # --- Release bundles ---------------------------------------------------------
 *.zip
 *.dmg
 *.pkg
 *.tar.gz
+!/third_party/node/v22.19.0/*.tar.gz
 
 # --- Development-process material -------------------------------------------
 # Keep architecture and release scripts in the independent source repository.
