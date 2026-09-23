@@ -1,0 +1,172 @@
+[
+  {
+    "name": "R-FX-001 accepts a verified DOCX descriptor without a path",
+    "kind": "descriptor",
+    "valid": true,
+    "value": {
+      "protocol": "muse.resource/descriptor/v1",
+      "resourceRef": "resource.docx.1",
+      "revision": "rev.docx.7",
+      "displayName": "产品方案.docx",
+      "mediaType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "sizeBytes": 482193,
+      "format": { "formatId": "ooxml.word", "confidence": "verified" },
+      "capabilities": ["describe", "snapshot", "materialize", "commit", "subscribe"],
+      "security": { "classification": "internal", "activeContent": "unknown" },
+      "extensions": { "ontologyProjectionEligible": true }
+    }
+  },
+  {
+    "name": "R-FX-002 accepts an audience-bound bytes handle",
+    "kind": "materialization",
+    "valid": true,
+    "value": {
+      "protocol": "muse.resource/materialization/v1",
+      "handleRef": "materialization.1",
+      "resourceRef": "resource.docx.1",
+      "revision": "rev.docx.7",
+      "consumerAdapterRef": "muse.ioffice.word~1.0.0",
+      "kind": "bytes-handle",
+      "accessMode": "read",
+      "expiresAt": 1789466410000,
+      "sizeBytes": 482193,
+      "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  },
+  {
+    "name": "R-FX-003 accepts an optimistic commit request",
+    "kind": "commit-request",
+    "valid": true,
+    "value": {
+      "protocol": "muse.resource/commit-request/v1",
+      "commitRef": "commit.1",
+      "resourceRef": "resource.code.1",
+      "expectedRevision": "rev.code.3",
+      "sessionRef": "engine-session.1",
+      "content": {
+        "kind": "working-copy",
+        "handleRef": "materialization.2",
+        "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "intent": "user-save",
+      "idempotencyKey": "idem.commit.1"
+    }
+  },
+  {
+    "name": "R-FX-004 accepts a committed receipt",
+    "kind": "commit-receipt",
+    "valid": true,
+    "value": {
+      "protocol": "muse.resource/commit-receipt/v1",
+      "result": "committed",
+      "commitRef": "commit.1",
+      "resourceRef": "resource.code.1",
+      "newRevision": "rev.code.4",
+      "providerReceiptRef": "receipt.provider.1"
+    }
+  },
+  {
+    "name": "R-FX-005 accepts a revision conflict without leaking a path",
+    "kind": "commit-receipt",
+    "valid": true,
+    "value": {
+      "protocol": "muse.resource/commit-receipt/v1",
+      "result": "conflict",
+      "commitRef": "commit.2",
+      "resourceRef": "resource.code.1",
+      "currentRevision": "rev.code.5",
+      "compareRef": "compare.1"
+    }
+  },
+  {
+    "name": "R-FX-006 accepts a committed change event",
+    "kind": "event",
+    "valid": true,
+    "value": {
+      "protocol": "muse.resource/event/v1",
+      "eventRef": "event.resource.1",
+      "cursor": "cursor.9",
+      "resourceRef": "resource.code.1",
+      "occurredAt": 1789466400000,
+      "origin": "ui",
+      "kind": "changed",
+      "beforeRevision": "rev.code.3",
+      "afterRevision": "rev.code.4",
+      "commandRef": "command.save.1"
+    }
+  },
+  {
+    "name": "R-FX-101 rejects a raw local path in a descriptor",
+    "kind": "descriptor",
+    "valid": false,
+    "value": {
+      "protocol": "muse.resource/descriptor/v1",
+      "resourceRef": "resource.bad.1",
+      "revision": "rev.1",
+      "displayName": "secret.docx",
+      "mediaType": "application/octet-stream",
+      "path": "/Users/alice/secret.docx",
+      "format": { "formatId": "binary.unknown", "confidence": "claimed" },
+      "capabilities": ["describe"],
+      "security": { "classification": "restricted", "activeContent": "unknown" }
+    }
+  },
+  {
+    "name": "R-FX-102 rejects a bearer URL in a materialization envelope",
+    "kind": "materialization",
+    "valid": false,
+    "value": {
+      "protocol": "muse.resource/materialization/v1",
+      "handleRef": "materialization.bad.1",
+      "resourceRef": "resource.pdf.1",
+      "revision": "rev.pdf.1",
+      "consumerAdapterRef": "muse.viewer.pdf~1.0.0",
+      "kind": "remote-url",
+      "accessMode": "read",
+      "expiresAt": 1789466410000,
+      "url": "https://example.invalid/file?token=secret"
+    }
+  },
+  {
+    "name": "R-FX-103 rejects duplicate capabilities",
+    "kind": "descriptor",
+    "valid": false,
+    "value": {
+      "protocol": "muse.resource/descriptor/v1",
+      "resourceRef": "resource.bad.2",
+      "revision": "rev.1",
+      "displayName": "bad.txt",
+      "mediaType": "text/plain",
+      "format": { "formatId": "text.plain", "confidence": "sniffed" },
+      "capabilities": ["describe", "describe"],
+      "security": { "classification": "internal", "activeContent": "none" }
+    }
+  },
+  {
+    "name": "R-FX-104 rejects a conflict receipt without current revision",
+    "kind": "commit-receipt",
+    "valid": false,
+    "value": {
+      "protocol": "muse.resource/commit-receipt/v1",
+      "result": "conflict",
+      "commitRef": "commit.bad.1",
+      "resourceRef": "resource.code.1"
+    }
+  },
+  {
+    "name": "R-FX-105 rejects a writable URL materialization",
+    "kind": "materialization",
+    "valid": false,
+    "value": {
+      "protocol": "muse.resource/materialization/v1",
+      "handleRef": "materialization.bad.3",
+      "resourceRef": "resource.pdf.1",
+      "revision": "rev.pdf.1",
+      "consumerAdapterRef": "muse.viewer.pdf~1.0.0",
+      "kind": "remote-url",
+      "accessMode": "read-write",
+      "expiresAt": 1789466410000
+    }
+  }
+]
+

@@ -1,0 +1,8 @@
+{
+  "commit-receipt": "sha256:72e7005da12453936b01ce9c1c0b8bea09128dfb725d680280ee7bfe8c167d13",
+  "commit-request": "sha256:449e676597e2fd557a87ae05a0681e79d79fb1cde0d01037fd73fc3112d3eca4",
+  "materialization": "sha256:50a99621c89caf1c32a2efc01ba6700f1e6d195afcd4e7b2b7b311ceefa7d773",
+  "resource-descriptor": "sha256:237a230cd2fee2c4093d75bc1f374d3b018cbbc167079e08d3036e9c3ba3efb8",
+  "resource-event": "sha256:ec1014286f3cff50f544fff5ec518545f8d28b4ea79eade71decac685ca33269"
+}
+

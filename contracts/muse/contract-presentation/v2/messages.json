@@ -1,0 +1,100 @@
+[
+  {
+    "name": "P-FX-001 accepts a DSH deliverable open request",
+    "kind": "request", "valid": true,
+    "value": {
+      "protocol": "muse.presentation/request/v2", "requestRef": "preq.1", "resourceRef": "resource.docx.1",
+      "disposition": "open", "requestedMode": "prefer-edit",
+      "anchorHint": { "provider": "muse.text-anchor/v1", "value": { "line": 42, "column": 7 } },
+      "placementHint": "current-window",
+      "cause": { "kind": "dsh-deliverable", "sessionRef": "dsh.session.1", "eventRef": "dsh.event.9" },
+      "requestedAt": 1789466400000
+    }
+  },
+  {
+    "name": "P-FX-002 accepts an engine-neutral route decision",
+    "kind": "route-decision", "valid": true,
+    "value": {
+      "protocol": "muse.presentation/route-decision/v2", "decisionRef": "route.1", "requestRef": "preq.1", "attemptRef": "attempt.1",
+      "selectedAdapterRef": "muse.ioffice.word~1.0.0", "effectiveMode": "view", "reasonCodes": ["MODE_DOWNGRADED_SAVE_UNAVAILABLE"],
+      "alternatives": [
+        { "adapterRef": "muse.ioffice.word~1.0.0", "available": true, "effectiveModes": ["view", "ephemeral-edit"], "score": 900, "reasonCodes": [] },
+        { "adapterRef": "muse.viewer.office~1.0.0", "available": false, "effectiveModes": [], "score": 100, "reasonCodes": ["PLUGIN_NOT_CERTIFIED"] }
+      ],
+      "decidedAt": 1789466400010
+    }
+  },
+  {
+    "name": "P-FX-003 accepts an opened receipt",
+    "kind": "receipt", "valid": true,
+    "value": {
+      "protocol": "muse.presentation/receipt/v2", "receiptRef": "presentation-receipt.1", "requestRef": "preq.1", "attemptRef": "attempt.1",
+      "completedAt": 1789466400100, "traceRef": "trace.1", "result": "opened", "effectiveMode": "view",
+      "selectedAdapterRef": "muse.ioffice.word~1.0.0", "resourceRef": "resource.docx.1", "revision": "rev.docx.7",
+      "sessionRef": "engine-session.1", "surfaceInstanceRef": "surface.1", "warnings": ["save-unavailable"]
+    }
+  },
+  {
+    "name": "P-FX-004 accepts a visible fallback receipt",
+    "kind": "receipt", "valid": true,
+    "value": {
+      "protocol": "muse.presentation/receipt/v2", "receiptRef": "presentation-receipt.2", "requestRef": "preq.2", "attemptRef": "attempt.2b",
+      "completedAt": 1789466400200, "traceRef": "trace.2", "result": "fallback", "effectiveMode": "view",
+      "selectedAdapterRef": "muse.viewer.pdf~1.0.0", "resourceRef": "resource.pdf.1", "revision": "rev.pdf.1",
+      "sessionRef": "engine-session.2", "surfaceInstanceRef": "surface.2", "warnings": ["primary-adapter-unavailable"]
+    }
+  },
+  {
+    "name": "P-FX-005 accepts a cancelled terminal receipt",
+    "kind": "receipt", "valid": true,
+    "value": {
+      "protocol": "muse.presentation/receipt/v2", "receiptRef": "presentation-receipt.3", "requestRef": "preq.3", "attemptRef": "attempt.3",
+      "completedAt": 1789466400300, "traceRef": "trace.3", "result": "cancelled", "errorCode": "CANCELLED", "retryable": false
+    }
+  },
+  {
+    "name": "P-FX-101 rejects caller-forced engine selection",
+    "kind": "request", "valid": false,
+    "value": {
+      "protocol": "muse.presentation/request/v2", "requestRef": "preq.bad.1", "resourceRef": "resource.docx.1",
+      "disposition": "open", "requestedMode": "view", "placementHint": "current-window", "cause": { "kind": "user" },
+      "requestedAt": 1789466400000, "engineId": "ioffice"
+    }
+  },
+  {
+    "name": "P-FX-102 rejects a success receipt without session ownership",
+    "kind": "receipt", "valid": false,
+    "value": {
+      "protocol": "muse.presentation/receipt/v2", "receiptRef": "presentation-receipt.bad.1", "requestRef": "preq.bad.2", "attemptRef": "attempt.bad.2",
+      "completedAt": 1789466400000, "traceRef": "trace.bad.2", "result": "opened", "effectiveMode": "view",
+      "selectedAdapterRef": "muse.viewer.text~1.0.0", "resourceRef": "resource.text.1", "revision": "rev.text.1", "warnings": []
+    }
+  },
+  {
+    "name": "P-FX-103 rejects a fallback without final adapter",
+    "kind": "receipt", "valid": false,
+    "value": {
+      "protocol": "muse.presentation/receipt/v2", "receiptRef": "presentation-receipt.bad.2", "requestRef": "preq.bad.3", "attemptRef": "attempt.bad.3",
+      "completedAt": 1789466400000, "traceRef": "trace.bad.3", "result": "fallback", "errorCode": "PRIMARY_FAILED", "retryable": true
+    }
+  },
+  {
+    "name": "P-FX-104 rejects unknown requested mode",
+    "kind": "request", "valid": false,
+    "value": {
+      "protocol": "muse.presentation/request/v2", "requestRef": "preq.bad.4", "resourceRef": "resource.text.1",
+      "disposition": "open", "requestedMode": "force-admin-edit", "placementHint": "current-window", "cause": { "kind": "agent-tool" },
+      "requestedAt": 1789466400000
+    }
+  },
+  {
+    "name": "P-FX-105 rejects route reasons that are not stable codes",
+    "kind": "route-decision", "valid": false,
+    "value": {
+      "protocol": "muse.presentation/route-decision/v2", "decisionRef": "route.bad.1", "requestRef": "preq.bad.5", "attemptRef": "attempt.bad.5",
+      "selectedAdapterRef": "muse.viewer.text~1.0.0", "effectiveMode": "view", "reasonCodes": ["because I feel like it"],
+      "alternatives": [], "decidedAt": 1789466400000
+    }
+  }
+]
+

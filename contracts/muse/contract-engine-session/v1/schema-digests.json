@@ -1,0 +1,9 @@
+{
+  "adapter-manifest": "sha256:ff4f512fdb1e629166c0446d791f3ecd510ec3ddaa2af2e618d24abcb42b7e29",
+  "open-session-request": "sha256:e6843c5dcff288128775534fcc46711e42ebdf974113dbd63b03c49c9f78ee2e",
+  "probe-request": "sha256:54f3ceaac634139c26e1a05ace26f3fd403382f4084dce2d4ecac0d588107809",
+  "probe-result": "sha256:17dd1fede83522469c70206f2c97f350a7df79966cafe208ac298172770e565a",
+  "session-event": "sha256:270467981eb4c29c8813e514e2b270c8125b4a779d3dfea1e2b3224368024e77",
+  "session-handle": "sha256:2ea3176886e9c7b1fc2c4033ac971294d4935340138666e4e5e252c95dd53c85"
+}
+

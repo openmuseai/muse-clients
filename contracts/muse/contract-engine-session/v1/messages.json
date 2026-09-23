@@ -1,0 +1,112 @@
+[
+  {
+    "name": "E-FX-001 accepts the current ioffice Word view manifest",
+    "kind": "manifest", "valid": true,
+    "value": {
+      "manifestVersion": "muse.engine-adapter-manifest/v1", "adapterId": "muse.ioffice.word", "adapterVersion": "1.0.0",
+      "engine": { "vendor": "ioffice", "engineId": "word", "engineVersion": "0.1.0", "runtimeDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" },
+      "placements": ["desktop-local"], "platforms": [{ "os": "macos", "arch": "arm64" }],
+      "formats": [{ "formatId": "ooxml.word", "mimeTypes": ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"], "extensionsHint": ["docx"] }],
+      "modes": ["view", "ephemeral-edit"], "materializations": ["bytes-handle"], "contextProviders": ["page", "text-selection"],
+      "capabilities": ["focus", "set-active", "navigate", "context", "health"],
+      "risk": { "executesProcess": false, "executesActiveContent": false, "requiresGpu": false }
+    }
+  },
+  {
+    "name": "E-FX-002 accepts a cancellable probe request",
+    "kind": "probe-request", "valid": true,
+    "value": {
+      "protocol": "muse.engine/probe-request/v1", "probeRef": "probe.1",
+      "descriptor": { "resourceRef": "resource.docx.1", "revision": "rev.docx.7", "format": { "formatId": "ooxml.word", "confidence": "verified" }, "sizeBytes": 482193, "security": { "classification": "internal", "activeContent": "unknown" } },
+      "placement": { "kind": "desktop-local", "os": "macos", "arch": "arm64", "memoryBudgetBytes": 1073741824, "gpu": true },
+      "requestedMode": "prefer-edit", "policyRevision": "policy.8", "deadlineAt": 1789466405000, "cancellationRef": "cancel.probe.1"
+    }
+  },
+  {
+    "name": "E-FX-003 accepts a side-effect-free probe result",
+    "kind": "probe-result", "valid": true,
+    "value": {
+      "protocol": "muse.engine/probe-result/v1", "probeRef": "probe.1", "available": true,
+      "effectiveModes": ["view", "ephemeral-edit"], "materializationKinds": ["bytes-handle"], "limits": { "maxBytes": 52428800 },
+      "quality": { "fidelity": "native-partial", "startupClass": "warm-medium" }, "warnings": ["save-unavailable"],
+      "probeDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "expiresAt": 1789466410000
+    }
+  },
+  {
+    "name": "E-FX-004 accepts an opaque open session request",
+    "kind": "open-session-request", "valid": true,
+    "value": {
+      "protocol": "muse.engine/open-session-request/v1", "requestRef": "preq.1", "attemptRef": "attempt.1", "resourceRef": "resource.docx.1",
+      "baseRevision": "rev.docx.7", "mode": "view", "materialization": { "kind": "bytes-handle", "handleRef": "materialization.1", "expiresAt": 1789466410000 },
+      "surface": { "windowRef": "window.primary", "placement": "main", "reuse": "compatible" },
+      "anchorHint": { "provider": "muse.text-anchor/v1", "value": { "line": 42 } }, "generation": 1
+    }
+  },
+  {
+    "name": "E-FX-005 accepts a ready session handle",
+    "kind": "session-handle", "valid": true,
+    "value": {
+      "protocol": "muse.engine/session-handle/v1", "sessionRef": "engine-session.1", "surfaceInstanceRef": "surface.1",
+      "adapterRef": "muse.ioffice.word~1.0.0", "resourceRef": "resource.docx.1", "baseRevision": "rev.docx.7", "mode": "view", "generation": 1, "state": "ready"
+    }
+  },
+  {
+    "name": "E-FX-006 accepts a generation-scoped focus event",
+    "kind": "session-event", "valid": true,
+    "value": {
+      "protocol": "muse.engine/session-event/v1", "eventRef": "engine-event.1", "cursor": "cursor.engine.1", "sessionRef": "engine-session.1",
+      "resourceRef": "resource.docx.1", "generation": 1, "state": "focused", "occurredAt": 1789466400200,
+      "details": { "focused": true, "ontologyProjectionEligible": true }
+    }
+  },
+  {
+    "name": "E-FX-101 rejects a manifest that claims edit without declaring commit",
+    "kind": "manifest", "valid": false,
+    "value": {
+      "manifestVersion": "muse.engine-adapter-manifest/v1", "adapterId": "muse.bad.editor", "adapterVersion": "1.0.0",
+      "engine": { "vendor": "bad", "engineId": "editor", "engineVersion": "1.0.0" },
+      "placements": ["desktop-local"], "platforms": [{ "os": "macos", "arch": "arm64" }],
+      "formats": [{ "formatId": "text.plain", "mimeTypes": ["text/plain"], "extensionsHint": ["txt"] }],
+      "modes": ["edit"], "materializations": ["working-copy"], "contextProviders": [], "capabilities": ["health"],
+      "risk": { "executesProcess": false, "executesActiveContent": false, "requiresGpu": false }
+    }
+  },
+  {
+    "name": "E-FX-102 rejects a raw path in an open request",
+    "kind": "open-session-request", "valid": false,
+    "value": {
+      "protocol": "muse.engine/open-session-request/v1", "requestRef": "preq.bad.2", "attemptRef": "attempt.bad.2", "resourceRef": "resource.code.1",
+      "baseRevision": "rev.code.1", "mode": "view", "materialization": { "kind": "read-file-handle", "handleRef": "materialization.bad.2", "expiresAt": 1789466410000, "path": "/tmp/secret" },
+      "surface": { "windowRef": "window.primary", "placement": "main", "reuse": "never" }, "generation": 1
+    }
+  },
+  {
+    "name": "E-FX-103 rejects a session without generation",
+    "kind": "session-handle", "valid": false,
+    "value": {
+      "protocol": "muse.engine/session-handle/v1", "sessionRef": "engine-session.bad.3", "surfaceInstanceRef": "surface.bad.3",
+      "adapterRef": "muse.viewer.text~1.0.0", "resourceRef": "resource.text.1", "baseRevision": "rev.text.1", "mode": "view", "state": "ready"
+    }
+  },
+  {
+    "name": "E-FX-104 rejects an unknown materialization kind",
+    "kind": "probe-result", "valid": false,
+    "value": {
+      "protocol": "muse.engine/probe-result/v1", "probeRef": "probe.bad.4", "available": true,
+      "effectiveModes": ["view"], "materializationKinds": ["filesystem-path"], "limits": { "maxBytes": 1 },
+      "quality": { "fidelity": "generic", "startupClass": "hot-fast" }, "warnings": [],
+      "probeDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "expiresAt": 1789466410000
+    }
+  },
+  {
+    "name": "E-FX-105 rejects an unavailable probe that advertises usable modes",
+    "kind": "probe-result", "valid": false,
+    "value": {
+      "protocol": "muse.engine/probe-result/v1", "probeRef": "probe.bad.5", "available": false,
+      "effectiveModes": ["view"], "materializationKinds": ["bytes-handle"], "limits": { "maxBytes": 0 },
+      "quality": { "fidelity": "generic", "startupClass": "cold-slow" }, "warnings": ["engine-unavailable"],
+      "probeDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd", "expiresAt": 1789466410000
+    }
+  }
+]
+
