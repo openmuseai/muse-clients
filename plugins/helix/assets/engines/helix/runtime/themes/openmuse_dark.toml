@@ -1,0 +1,34 @@
+# OpenMuse-owned dark palette. The bundled Helix theme provides unspecified
+# scopes; these overrides keep editor surfaces legible in dark appearance.
+inherits = "onelight"
+
+"ui.background" = { bg = "#20242c" }
+"ui.background.separator" = { bg = "#20242c" }
+"ui.cursorline" = { bg = "#2c3440" }
+"ui.cursorline.primary" = { bg = "#2c3440" }
+"ui.cursorline.secondary" = { bg = "#29303b" }
+"ui.text" = { fg = "#e5e7ee" }
+"ui.text.focus" = { fg = "#ffffff", bg = "#3c4656" }
+"ui.text.inactive" = { fg = "#9aa3b2" }
+"ui.gutter" = { fg = "#858f9e", bg = "#20242c" }
+"ui.gutter.selected" = { fg = "#e5e7ee", bg = "#20242c" }
+"ui.linenr" = { fg = "#858f9e" }
+"ui.linenr.selected" = { fg = "#e5e7ee" }
+"ui.statusline" = { fg = "#e5e7ee", bg = "#303743" }
+"ui.statusline.inactive" = { fg = "#9aa3b2", bg = "#292f39" }
+"ui.popup" = { fg = "#e5e7ee", bg = "#303743" }
+"ui.popup.info" = { fg = "#e5e7ee", bg = "#303743" }
+"ui.help" = { fg = "#e5e7ee", bg = "#303743" }
+"ui.window" = { fg = "#465064", bg = "#20242c" }
+"ui.cursor" = { fg = "#20242c", bg = "#e5e7ee" }
+"ui.cursor.primary" = { fg = "#20242c", bg = "#e5e7ee" }
+"ui.selection" = { bg = "#3e526d" }
+
+"keyword" = { fg = "#c678dd" }
+"function" = { fg = "#61afef" }
+"type" = { fg = "#e5c07b" }
+"string" = { fg = "#98c379" }
+"comment" = { fg = "#858f9e", modifiers = ["italic"] }
+"constant" = { fg = "#56b6c2" }
+"variable" = { fg = "#e5e7ee" }
+"punctuation" = { fg = "#e5e7ee" }
