@@ -7,6 +7,7 @@ import 'package:openmuse_host/src/host/openmuse_app.dart';
 import 'package:openmuse_host/src/host/local_settings.dart';
 import 'package:openmuse_host/src/host/workspace_controller.dart';
 import 'package:openmuse_plugin_sdk/openmuse_plugin_sdk.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
   late Directory root;
@@ -144,11 +145,14 @@ void main() {
     await tester.pumpWidget(
       OpenMuseHostApp(registry: registry, workspace: workspace),
     );
-    expect(find.text(root.path.split('/').last), findsOneWidget);
+    // The sidebar labels a workspace with its basename; split('/') is a POSIX
+    // assumption that yields the whole path on Windows.
+    final label = p.basename(root.path);
+    expect(find.text(label), findsOneWidget);
     await tester.tap(find.byKey(const Key('project-workspace-toggle')));
     await tester.pump();
     expect(workspace.projectSectionExpanded, isFalse);
-    expect(find.text(root.path.split('/').last), findsNothing);
+    expect(find.text(label), findsNothing);
   });
 
   testWidgets('resource menu groups opening and versions into cascades', (

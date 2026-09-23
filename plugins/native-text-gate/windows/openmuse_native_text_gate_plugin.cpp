@@ -47,7 +47,9 @@ void OpenMuseNativeTextGatePlugin::HandleMethodCall(
     if (found == arguments->end()) return 0.0;
     if (const auto* value = std::get_if<double>(&found->second)) return *value;
     if (const auto* value = std::get_if<int32_t>(&found->second)) return *value;
-    if (const auto* value = std::get_if<int64_t>(&found->second)) return *value;
+    if (const auto* value = std::get_if<int64_t>(&found->second)) {
+      return static_cast<double>(*value);
+    }
     return 0.0;
   };
   if (native_text_view_ == nullptr) {
@@ -61,10 +63,15 @@ void OpenMuseNativeTextGatePlugin::HandleMethodCall(
     SendMessage(native_text_view_, WM_SETFONT,
                 reinterpret_cast<WPARAM>(GetStockObject(DEFAULT_GUI_FONT)), TRUE);
   }
+  // Windows headers define min/max as macros, so std::max cannot be spelled
+  // here; use explicit comparisons and keep a one-pixel minimum extent.
+  const auto atLeastOne = [](double value) -> int {
+    const auto rounded = static_cast<int>(value);
+    return rounded < 1 ? 1 : rounded;
+  };
   SetWindowPos(native_text_view_, HWND_TOP, static_cast<int>(number("x")),
-               static_cast<int>(number("y")),
-               std::max(1, static_cast<int>(number("width"))),
-               std::max(1, static_cast<int>(number("height"))),
+               static_cast<int>(number("y")), atLeastOne(number("width")),
+               atLeastOne(number("height")),
                SWP_SHOWWINDOW | SWP_NOACTIVATE);
   result->Success();
 }

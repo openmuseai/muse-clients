@@ -27,7 +27,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   FlutterWindow window(project);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
-  if (!window.Create(L"openmuse_host", origin, size)) {
+  // Window title. Kept identical to ProductName in Runner.rc and to
+  // PRODUCT_NAME in the macOS AppInfo.xcconfig.
+  if (!window.Create(L"OpenMuse", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

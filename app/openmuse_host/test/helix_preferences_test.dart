@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -40,7 +41,9 @@ void main() {
       },
     );
     expect(settings.languagesToml, contains('[language-server.dart]'));
-    expect(settings.languagesToml, contains(executable.path));
+    // The TOML writer emits a JSON-style basic string, so a Windows path is
+    // expected with escaped backslashes.
+    expect(settings.languagesToml, contains(jsonEncode(executable.path)));
     expect(settings.languagesToml, isNot(contains('rust-analyzer')));
     expect(settings.languagesToml, isNot(contains('untrusted.name')));
   });
